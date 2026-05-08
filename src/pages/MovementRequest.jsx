@@ -56,8 +56,16 @@ export default function MovementRequest() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" dir="rtl">
       <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full max-w-2xl border-t-4" style={{ borderColor: 'var(--color-primary)' }}>
         <div className="text-center mb-8">
+          <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg mb-4"
+               style={{ backgroundColor: '#F47920' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
           <h1 className="text-2xl font-bold text-gray-800">طلب حركة مركبة</h1>
-          <p className="text-gray-500 mt-2">يرجى ملء تفاصيل الرحلة المطلوبة. سيقوم قسم الإدارة بمراجعة الطلب وتخصيص السائق المناسب.</p>
+          <p className="text-sm text-gray-500 mt-2 font-medium">Terre des hommes — إدارة الحركة</p>
+          <p className="text-gray-500 mt-1">يرجى ملء تفاصيل الرحلة المطلوبة. سيقوم قسم الإدارة بمراجعة الطلب وتخصيص السائق المناسب.</p>
         </div>
 
         {status === 'success' && (
