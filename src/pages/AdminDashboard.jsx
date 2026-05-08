@@ -222,9 +222,10 @@ export default function AdminDashboard() {
                             <Calendar className="w-4 h-4 text-gray-400" />
                             {p.date}
                           </div>
-                          <div className="flex items-center text-sm text-gray-600 gap-1.5 border-l border-gray-300 pl-3">
-                            <Clock className="w-4 h-4 text-gray-400" />
-                            {p.departure_time?.substring(0, 5)} - {p.return_time?.substring(0, 5)}
+                          <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold" style={p.shift === 'Morning' ? { backgroundColor: '#fff7f0', color: '#F47920' } : { backgroundColor: '#f0f4ff', color: '#4f46e5' }}>
+                              {p.shift === 'Morning' ? '☀️ Morning' : p.shift === 'Evening' ? '🌙 Evening' : '— Not set'}
+                            </span>
                           </div>
                         </div>
                         
