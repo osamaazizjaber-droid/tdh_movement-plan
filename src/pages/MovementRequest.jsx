@@ -16,8 +16,6 @@ export default function MovementRequest() {
     destination: '',
     passengers: '',
     purpose: '',
-    departure_time: '09:00',
-    return_time: '15:00',
     notes: ''
   });
 
@@ -165,26 +163,6 @@ export default function MovementRequest() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="form-group mb-0">
-              <label className="form-label">وقت المغادرة المقترح</label>
-              <input 
-                type="time" 
-                className="form-input"
-                value={form.departure_time}
-                onChange={e => setForm({...form, departure_time: e.target.value})}
-              />
-            </div>
-            <div className="form-group mb-0">
-              <label className="form-label">وقت العودة المتوقع</label>
-              <input 
-                type="time" 
-                className="form-input"
-                value={form.return_time}
-                onChange={e => setForm({...form, return_time: e.target.value})}
-              />
-            </div>
-          </div>
 
           <div className="form-group">
             <label className="form-label">ملاحظات إضافية (اختياري)</label>
