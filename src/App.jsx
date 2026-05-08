@@ -47,8 +47,8 @@ export default function App() {
         />
         
         {/* Default redirect */}
-        <Route path="/" element={<Navigate to={session ? "/admin" : "/request"} replace />} />
-        <Route path="*" element={<Navigate to={session ? "/admin" : "/request"} replace />} />
+        <Route path="/" element={<Navigate to={session ? "/admin" : "/login"} replace />} />
+        <Route path="*" element={<Navigate to={session ? "/admin" : "/login"} replace />} />
       </Routes>
     </Router>
   );
