@@ -12,6 +12,7 @@ export default function MovementRequest() {
   const [form, setForm] = useState({
     team: TEAMS[0],
     date: new Date().toISOString().split('T')[0],
+    shift: 'Morning',
     destination: '',
     passengers: '',
     purpose: '',
@@ -29,7 +30,6 @@ export default function MovementRequest() {
       const { error } = await supabase.from('movement_plans').insert([{
         ...form,
         status: 'Pending',
-        shift: null, // Admin will assign
         driver_id: null // Admin will assign
       }]);
 
@@ -90,16 +90,44 @@ export default function MovementRequest() {
               />
             </div>
             <div className="form-group mb-0">
-              <label className="form-label">الفريق / القسم *</label>
-              <select 
-                required 
-                className="form-input"
-                value={form.team}
-                onChange={e => setForm({...form, team: e.target.value})}
-              >
-                {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <label className="form-label">فترة الرحلة *</label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setForm({...form, shift: 'Morning'})}
+                  className="py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                  style={form.shift === 'Morning'
+                    ? { borderColor: '#F47920', backgroundColor: '#fff7f0', color: '#F47920' }
+                    : { borderColor: '#e5e7eb', backgroundColor: 'white', color: '#6b7280' }
+                  }
+                >
+                  ☀️ صباحي
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({...form, shift: 'Evening'})}
+                  className="py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                  style={form.shift === 'Evening'
+                    ? { borderColor: '#F47920', backgroundColor: '#fff7f0', color: '#F47920' }
+                    : { borderColor: '#e5e7eb', backgroundColor: 'white', color: '#6b7280' }
+                  }
+                >
+                  🌙 مسائي
+                </button>
+              </div>
             </div>
+          </div>
+
+          <div className="form-group mb-0">
+            <label className="form-label">الفريق / القسم *</label>
+            <select 
+              required 
+              className="form-input"
+              value={form.team}
+              onChange={e => setForm({...form, team: e.target.value})}
+            >
+              {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
           </div>
 
           <div className="form-group">

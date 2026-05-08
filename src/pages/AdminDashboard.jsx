@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [selectedPlanDate, setSelectedPlanDate] = useState(null);
   
   // Forms
   const [driverForm, setDriverForm] = useState({ name: '', car_type: '' });
@@ -78,9 +79,11 @@ export default function AdminDashboard() {
     }
   };
 
-  const openApproveModal = (planId) => {
-    setSelectedPlanId(planId);
-    setApproveForm({ driver_id: '', shift: 'Morning' });
+  const openApproveModal = (plan) => {
+    setSelectedPlanId(plan.id);
+    setSelectedPlanDate(plan.date);
+    // Pre-fill shift from what staff selected (if any), else default Morning
+    setApproveForm({ driver_id: '', shift: plan.shift || 'Morning' });
     setShowApproveModal(true);
   };
 
@@ -247,7 +250,7 @@ export default function AdminDashboard() {
                       </div>
                       
                       <div className="flex flex-row md:flex-col gap-2 shrink-0">
-                        <button onClick={() => openApproveModal(p.id)} className="flex-1 flex justify-center items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm">
+                        <button onClick={() => openApproveModal(p)} className="flex-1 flex justify-center items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm">
                           <CheckCircle className="w-4 h-4" /> Approve
                         </button>
                         <button onClick={() => handleReject(p.id)} className="flex-1 flex justify-center items-center gap-2 bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
@@ -405,10 +408,39 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Assign Driver</label>
-                  <select required className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none transition-all" onFocus={e => e.target.style.borderColor='#F47920'} onBlur={e => e.target.style.borderColor='#d1d5db'} value={approveForm.driver_id} onChange={e => setApproveForm({...approveForm, driver_id: e.target.value})}>
-                    <option value="">Select a driver...</option>
-                    {drivers.map(d => <option key={d.id} value={d.id}>{d.name} ({d.car_type || 'N/A'})</option>)}
-                  </select>
+                  {/* Compute which drivers are already booked on same date + shift */}
+                  {(() => {
+                    const busyDriverIds = new Set(
+                      approvedPlans
+                        .filter(p => p.date === selectedPlanDate && p.shift === approveForm.shift && p.id !== selectedPlanId)
+                        .map(p => p.driver_id)
+                    );
+                    const availableDrivers = drivers.filter(d => !busyDriverIds.has(d.id));
+                    const busyDrivers = drivers.filter(d => busyDriverIds.has(d.id));
+                    return (
+                      <>
+                        <select required className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none transition-all" onFocus={e => e.target.style.borderColor='#F47920'} onBlur={e => e.target.style.borderColor='#d1d5db'} value={approveForm.driver_id} onChange={e => setApproveForm({...approveForm, driver_id: e.target.value})}>
+                          <option value="">Select a driver...</option>
+                          {availableDrivers.map(d => (
+                            <option key={d.id} value={d.id}>{d.name} ({d.car_type || 'N/A'}) ✓ Available</option>
+                          ))}
+                          {busyDrivers.length > 0 && (
+                            <optgroup label="── Already Booked (same date & shift) ──">
+                              {busyDrivers.map(d => (
+                                <option key={d.id} value={d.id} disabled>{d.name} — Already assigned</option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </select>
+                        {availableDrivers.length === 0 && (
+                          <p className="text-xs text-red-500 mt-1.5">⚠ All drivers are already booked for this date &amp; shift. Change the shift or date.</p>
+                        )}
+                        {busyDrivers.length > 0 && availableDrivers.length > 0 && (
+                          <p className="text-xs mt-1.5" style={{ color: '#F47920' }}>ℹ {busyDrivers.length} driver(s) already have a trip on this date &amp; shift.</p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="mt-6 flex justify-end gap-3">
