@@ -19,7 +19,7 @@ const getDriverPlans = (plans, driverId, dateStr) => {
   };
 };
 
-export const generateMovementDocx = async (plans, drivers, title = "خطة حركة السيارات") => {
+export const generateMovementDocx = async (plans, drivers, title = "خطة حركة السيارات", startDateStr, endDateStr) => {
   try {
     // 1. Fetch the user's template from the public folder
     const response = await fetch("/template.docx");
@@ -44,22 +44,22 @@ export const generateMovementDocx = async (plans, drivers, title = "خطة حر�
     const driver1 = drivers[0] || { id: null, name: "السائق 1" };
     const driver2 = drivers[1] || { id: null, name: "السائق 2" };
 
-    let startDate = new Date();
-    if (plans.length > 0) {
-      const dates = plans.map(p => new Date(p.date).getTime());
-      startDate = new Date(Math.min(...dates));
-    }
-    const startDay = Math.max(startDate.getDay(), 0);
-    const diff = startDate.getDate() - startDay; 
-    startDate = new Date(startDate.setDate(diff)); // Nearest Sunday
+    let startD = startDateStr ? new Date(startDateStr) : new Date();
+    let endD = endDateStr ? new Date(endDateStr) : new Date();
 
-    const days = [
-      { ar: 'الأحد' },
-      { ar: 'الإثنين' },
-      { ar: 'الثلاثاء' },
-      { ar: 'الأربعاء' },
-      { ar: 'الخميس' }
-    ];
+    if (!startDateStr || !endDateStr || isNaN(startD.getTime()) || isNaN(endD.getTime())) {
+      if (plans.length > 0) {
+        const dates = plans.map(p => new Date(p.date).getTime());
+        startD = new Date(Math.min(...dates));
+      }
+      const startDay = Math.max(startD.getDay(), 0);
+      const diff = startD.getDate() - startDay; 
+      startD = new Date(startD.setDate(diff)); // Nearest Sunday
+      endD = new Date(startD);
+      endD.setDate(startD.getDate() + 4); // Thursday
+    }
+
+    const arabicDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
     const morning_rows = [];
     const evening_rows = [];
@@ -67,16 +67,16 @@ export const generateMovementDocx = async (plans, drivers, title = "خطة حر�
     const morningPlans = plans.filter(p => p.shift === 'Morning');
     const eveningPlans = plans.filter(p => p.shift === 'Evening');
 
-    days.forEach((day, index) => {
-      const rowDate = new Date(startDate);
-      rowDate.setDate(rowDate.getDate() + index);
-      const dateStr = rowDate.toISOString().split('T')[0];
+    let currentDate = new Date(startD);
+    while (currentDate <= endD) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const dayAr = arabicDays[currentDate.getDay()];
 
       // Format row for morning
       const mD1 = getDriverPlans(morningPlans, driver1.id, dateStr);
       const mD2 = getDriverPlans(morningPlans, driver2.id, dateStr);
       morning_rows.push({
-        day: day.ar,
+        day: dayAr,
         date: dateStr,
         d1_dest: mD1.dest,
         d1_pax: mD1.pax,
@@ -90,7 +90,7 @@ export const generateMovementDocx = async (plans, drivers, title = "خطة حر�
       const eD1 = getDriverPlans(eveningPlans, driver1.id, dateStr);
       const eD2 = getDriverPlans(eveningPlans, driver2.id, dateStr);
       evening_rows.push({
-        day: day.ar,
+        day: dayAr,
         date: dateStr,
         d1_dest: eD1.dest,
         d1_pax: eD1.pax,
@@ -99,7 +99,9 @@ export const generateMovementDocx = async (plans, drivers, title = "خطة حر�
         d2_pax: eD2.pax,
         d2_purp: eD2.purp,
       });
-    });
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
 
     // 5. Inject Data into Template
     doc.render({

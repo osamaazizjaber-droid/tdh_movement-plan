@@ -23,6 +23,22 @@ export default function AdminDashboard() {
     shift: 'Morning'
   });
 
+  const getInitialDates = () => {
+    const d = new Date();
+    const day = d.getDay();
+    const diffToSunday = d.getDate() - day;
+    const sunday = new Date(d.setDate(diffToSunday));
+    const thursday = new Date(sunday);
+    thursday.setDate(sunday.getDate() + 4);
+    return {
+      start: sunday.toISOString().split('T')[0],
+      end: thursday.toISOString().split('T')[0]
+    };
+  };
+
+  const [filterStartDate, setFilterStartDate] = useState(getInitialDates().start);
+  const [filterEndDate, setFilterEndDate] = useState(getInitialDates().end);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -143,7 +159,7 @@ export default function AdminDashboard() {
   };
 
   const pendingPlans = plans.filter(p => p.status === 'Pending');
-  const approvedPlans = plans.filter(p => p.status === 'Approved');
+  const approvedPlans = plans.filter(p => p.status === 'Approved' && p.date >= filterStartDate && p.date <= filterEndDate);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800" dir="ltr">
@@ -266,21 +282,29 @@ export default function AdminDashboard() {
           </div>
         ) : activeTab === 'approved' ? (
           <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-            <div className="p-5 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <div className="p-5 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h2 className="text-lg font-medium text-gray-900">Approved Schedule</h2>
                 <p className="text-sm text-gray-500 mt-1">Dispatched movements ready for export.</p>
               </div>
-              <button 
-                className="flex items-center gap-2 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#F47920' }}
-                onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#d4611a'; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F47920'; }}
-                onClick={() => generateMovementDocx(approvedPlans, drivers, "Weekly Movement Plan")}
-                disabled={approvedPlans.length === 0}
-              >
-                <Download className="w-4 h-4" /> Export DOCX
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Period:</span>
+                  <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                  <span className="text-gray-500 text-sm">to</span>
+                  <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                </div>
+                <button 
+                  className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  style={{ backgroundColor: '#F47920' }}
+                  onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#d4611a'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F47920'; }}
+                  onClick={() => generateMovementDocx(approvedPlans, drivers, `Weekly Movement Plan ${filterStartDate} to ${filterEndDate}`, filterStartDate, filterEndDate)}
+                  disabled={approvedPlans.length === 0}
+                >
+                  <Download className="w-4 h-4" /> Export DOCX
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm whitespace-nowrap">
