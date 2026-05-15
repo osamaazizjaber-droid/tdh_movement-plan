@@ -433,10 +433,11 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Assign Driver</label>
-                  {/* Compute which drivers are already booked on same date + shift */}
+                  {/* Compute which drivers are already booked on same date + shift (checks ALL approved plans, not just the current date-range filter) */}
                   {(() => {
+                    const allApproved = plans.filter(p => p.status === 'Approved');
                     const busyDriverIds = new Set(
-                      approvedPlans
+                      allApproved
                         .filter(p => p.date === selectedPlanDate && p.shift === approveForm.shift && p.id !== selectedPlanId)
                         .map(p => p.driver_id)
                     );
