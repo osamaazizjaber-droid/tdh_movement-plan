@@ -33,28 +33,11 @@ export const generateMovementDocx = async (plans, drivers, title = "خطة حر�
       linebreaks: true,
     });
 
-    // 4. Group drivers by car_type (preserving insertion order from Drivers tab)
-    // Each unique car_type becomes one "column" in the template (driver 1 / driver 2)
-    const carTypeMap = new Map(); // carType => [driver, ...]
-    for (const driver of drivers) {
-      const key = (driver.car_type || "غير محدد").trim();
-      if (!carTypeMap.has(key)) carTypeMap.set(key, []);
-      carTypeMap.get(key).push(driver);
-    }
-
-    const carTypeEntries = [...carTypeMap.entries()]; // [[carType, [drivers]], ...]
-
-    // Column 1 = first car type group, Column 2 = second car type group
-    const group1 = carTypeEntries[0] || ["السيارة 1", []];
-    const group2 = carTypeEntries[1] || ["السيارة 2", []];
-
-    const carType1     = group1[0];
-    const carType2     = group2[0];
-    const driverIds1   = group1[1].map(d => d.id);
-    const driverIds2   = group2[1].map(d => d.id);
-    // Build human-readable label: "Car Type – Driver Name(s)"
-    const driverLabel1 = group1[1].map(d => d.name).join(' / ') || carType1;
-    const driverLabel2 = group2[1].map(d => d.name).join(' / ') || carType2;
+    // 4. Prepare Data
+    // The template expects up to 2 drivers (d1 and d2).
+    // The caller now passes a filtered list of drivers (e.g. only StarX drivers).
+    const driver1 = drivers[0] || { id: "d1", name: "-" };
+    const driver2 = drivers[1] || { id: "d2", name: "-" };
 
     // 5. Build date range
     let startD = startDateStr ? new Date(startDateStr) : new Date();
@@ -84,32 +67,31 @@ export const generateMovementDocx = async (plans, drivers, title = "خطة حر�
       const dateStr = currentDate.toISOString().split('T')[0];
       const dayAr   = arabicDays[currentDate.getDay()];
 
-      // Morning row — grouped by car type
-      const mG1 = getCarTypePlans(morningPlans, driverIds1, dateStr);
-      const mG2 = getCarTypePlans(morningPlans, driverIds2, dateStr);
+      // Morning row
+      const mD1 = getCarTypePlans(morningPlans, [driver1.id], dateStr);
+      const mD2 = getCarTypePlans(morningPlans, [driver2.id], dateStr);
       morning_rows.push({
         day: dayAr, date: dateStr,
-        d1_dest: mG1.dest, d1_pax: mG1.pax, d1_purp: mG1.purp,
-        d2_dest: mG2.dest, d2_pax: mG2.pax, d2_purp: mG2.purp,
+        d1_dest: mD1.dest, d1_pax: mD1.pax, d1_purp: mD1.purp,
+        d2_dest: mD2.dest, d2_pax: mD2.pax, d2_purp: mD2.purp,
       });
 
-      // Evening row — grouped by car type
-      const eG1 = getCarTypePlans(eveningPlans, driverIds1, dateStr);
-      const eG2 = getCarTypePlans(eveningPlans, driverIds2, dateStr);
+      // Evening row
+      const eD1 = getCarTypePlans(eveningPlans, [driver1.id], dateStr);
+      const eD2 = getCarTypePlans(eveningPlans, [driver2.id], dateStr);
       evening_rows.push({
         day: dayAr, date: dateStr,
-        d1_dest: eG1.dest, d1_pax: eG1.pax, d1_purp: eG1.purp,
-        d2_dest: eG2.dest, d2_pax: eG2.pax, d2_purp: eG2.purp,
+        d1_dest: eD1.dest, d1_pax: eD1.pax, d1_purp: eD1.purp,
+        d2_dest: eD2.dest, d2_pax: eD2.pax, d2_purp: eD2.purp,
       });
 
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
     // 6. Inject into template
-    // driver_1_name / driver_2_name = "Car Type – Driver Name(s)"
     doc.render({
-      driver_1_name: `${carType1} – ${driverLabel1}`,
-      driver_2_name: `${carType2} – ${driverLabel2}`,
+      driver_1_name: driver1.name,
+      driver_2_name: driver2.name,
       morning_rows,
       evening_rows
     });

@@ -294,16 +294,26 @@ export default function AdminDashboard() {
                   <span className="text-gray-500 text-sm">to</span>
                   <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                 </div>
-                <button 
-                  className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                  style={{ backgroundColor: '#F47920' }}
-                  onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#d4611a'; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F47920'; }}
-                  onClick={() => generateMovementDocx(approvedPlans, drivers, `Weekly Movement Plan ${filterStartDate} to ${filterEndDate}`, filterStartDate, filterEndDate)}
-                  disabled={approvedPlans.length === 0}
-                >
-                  <Download className="w-4 h-4" /> Export DOCX
-                </button>
+                {/* Dynamic Export Buttons per Car Type */}
+                {Array.from(new Set(drivers.map(d => (d.car_type || "Other").trim()))).map(carType => {
+                  const driversOfThisType = drivers.filter(d => (d.car_type || "Other").trim() === carType);
+                  const driverIdsOfThisType = driversOfThisType.map(d => d.id);
+                  const plansOfThisType = approvedPlans.filter(p => driverIdsOfThisType.includes(p.driver_id));
+                  
+                  return (
+                    <button 
+                      key={carType}
+                      className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      style={{ backgroundColor: '#F47920' }}
+                      onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#d4611a'; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F47920'; }}
+                      onClick={() => generateMovementDocx(plansOfThisType, driversOfThisType, `${carType} Plan ${filterStartDate} to ${filterEndDate}`, filterStartDate, filterEndDate)}
+                      disabled={plansOfThisType.length === 0}
+                    >
+                      <Download className="w-4 h-4" /> Export {carType}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div className="overflow-x-auto">
